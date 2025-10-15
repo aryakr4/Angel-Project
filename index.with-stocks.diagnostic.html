@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Emerging Technology News</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Cache bust: images and help button removed -->
+  <style>
+    :root {
+      --maxw: 1100px; --pad: 16px; --radius: 10px;
+      /* Light theme tokens */
+      --bg: #ffffff; --surface: #ffffff; --muted: #f8f9fa; --border: #e0e3eb;
+      --text: #202124; --text-muted: #5f6368;
+      --accent: #1a73e8; --accent-weak: #e8f0fe;
+      --good: #34a853; --warn: #fbbc05; --bad: #ea4335;
+      --link: var(--accent); --link-visited: #1a73e8;
+      --card-bg: var(--surface); --card-hover: #f2f4f7; --focus: rgba(26,115,232,0.45);
+      --pillBg:#eef3fb; --pillActive:#e8f0fe;
+      --divider: var(--border);
+      /* Type scale */
+      --fs-1: clamp(1.8rem, 2.5vw, 2.1rem);
+      --fs-2: clamp(1.25rem, 1.6vw, 1.35rem);
+      --fs-3: 1.05rem; --fs-body: 0.98rem;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0c10; --surface: #11141a; --muted: #1b1f28; --border: #2a2f3a;
+        --text: #e9ecf1; --text-muted: #b9c1cc;
+        --accent: #8ab4f8; --accent-weak: #10233f;
+        --good: #7bd88f; --warn: #ffd666; --bad: #ff8a80;
+        --link: var(--accent); --link-visited: #a4c5ff;
+        --card-bg: var(--surface); --card-hover: #151924; --focus: rgba(138,180,248,0.45);
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { background: var(--bg); color: var(--text); }
+    body { font-family: /* "Inter", */ system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; margin: 0; font-size: var(--fs-body); line-height: 1.55; }
+    header { max-width: var(--maxw); margin: 32px auto 16px; padding: 0 var(--pad); }
+    .head-row { display: flex; align-items: baseline; gap: 12px; justify-content: space-between; }
+    h1 { margin: 0 0 8px; font-size: var(--fs-1); line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
+    .note, .header-note { font-size: 0.9rem; color: var(--text-muted); }
+    .sub { opacity: 0.9; font-size: 0.95rem; margin-top: 6px; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .controls > * { background: var(--muted); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; }
+    .btn { background: var(--muted); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+    .btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
+    .pill-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .pill { border:1px solid #dadce0; background: var(--pillBg); color:#1f1f1f; padding:6px 10px; border-radius:999px; cursor:pointer; }
+    .pill.active { background: var(--pillActive); border-color:#1a73e8; color:#1a73e8; }
+    .sources { position: relative; }
+    .sources .dropdown { position:absolute; z-index:10; top:110%; left:0; background:#fff; border:1px solid #dadce0; border-radius:8px; padding:8px; min-width:240px; display:none; }
+    .sources.open .dropdown { display:block; }
+    .dropdown label { display:flex; align-items:center; gap:6px; padding:4px 2px; color:#3c4043; }
+    button { cursor: pointer; }
+    main { max-width: var(--maxw); margin: 12px auto 40px; padding: 0 var(--pad); }
+    /* Responsive grid: 1 / 2 / 3 columns */
+    #results { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 640px) { #results { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { #results { grid-template-columns: repeat(3, 1fr); } }
+
+    /* Card */
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; transition: background 120ms ease, border-color 120ms ease, transform 120ms ease; outline: none; }
+    .card:hover { background: var(--card-hover); }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    /* Card layout */
+    .news { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .content { display: grid; gap: 6px; }
+    .title { margin: 0; font-size: var(--fs-3); line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .meta { font-size: 0.9rem; color: var(--text-muted); display: flex; gap: 8px; flex-wrap: wrap; }
+    .snippet { font-size: 0.92rem; color: #3c4043; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .actions { display:flex; align-items:center; gap:8px; }
+    .share { margin-left:auto; color:#5f6368; cursor:pointer; font-size:0.9rem; }
+
+    /* Keep single-column layout since images are removed */
+    @media (min-width: 480px) {
+      .news { grid-template-columns: 1fr; }
+    }
+
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer { max-width: var(--maxw); margin: 24px auto 60px; padding: 0 var(--pad); opacity: 0.9; font-size: 0.9rem; color: var(--text-muted); }
+    .small { font-size: 0.85rem; opacity: 0.85; }
+    .divider { height: 1px; background: var(--divider); margin: 6px 0; }
+    .footer-row { display:flex; align-items:center; gap:8px; margin-top:8px; color:#5f6368; }
+    .footer-row img { width:18px; height:18px; opacity:0.7; }
+    .footer-row svg { width:18px; height:18px; opacity:0.7; display:block; }
+    .toast-wrap { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: grid; gap: 6px; z-index: 1000; }
+    .toast { background:#202124; color:#fff; padding:6px 10px; border-radius:8px; font-size:0.85rem; opacity:0.7; animation: fadeOut 1.4s ease forwards; }
+    @keyframes fadeOut { 0%{opacity:.7; transform: translateY(0);} 70%{opacity:.45;} 100%{opacity:0; transform: translateY(6px);} }
+    .stale-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#f29900; margin-left:6px; vertical-align:middle; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="head-row">
+      <h1>Emerging Technology News</h1>
+      <div class="note" aria-label="Time zone note">All times are in PST.</div>
+    </div>
+    <div class="sub" id="dateLine">Loading date…</div>
+    <div class="controls">
+      <div>
+        Top
+        <button class="btn" data-top="10">10</button>
+        <button class="btn active" data-top="15">15</button>
+        <button class="btn" data-top="20">20</button>
+      </div>
+      <div>
+        Since
+        <button class="btn" data-since="3">3h</button>
+        <button class="btn active" data-since="24">24h</button>
+        <button class="btn" data-since="48">48h</button>
+      </div>
+      <div class="sources">
+        <button class="btn" id="sourcesBtn" aria-expanded="false" aria-controls="sourcesMenu">Sources ▾</button>
+        <div class="dropdown" id="sourcesMenu" role="menu" aria-label="Source preferences">
+          <div style="font-weight:600; margin:4px 0;">Mute</div>
+          <div id="muteList"></div>
+          <div class="divider" style="margin:6px 0;"></div>
+          <div style="font-weight:600; margin:4px 0;">Pin</div>
+          <div id="pinList"></div>
+        </div>
+      </div>
+      <button id="refreshBtn" class="btn">Refresh</button>
+    </div>
+    <div class="pill-row" id="tagPills" aria-label="Topic filters"></div>
+  </header>
+  <!-- Debug for market indices widget -->
+  <div id="stocks-debug" style="max-width:var(--maxw);margin:4px auto 16px;padding:0 var(--pad);font-size:12px;color:var(--text-muted);"></div>
+
+  <!-- Market Indices -->
+  <section id="stocks-leaderboard" class="stocks-leaderboard"></section>
+
+
+  <main id="results">Fetching…</main>
+  <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+  <footer>
+    <div>Sources are gathered from Google News RSS, scored by recency + keywords + light source weight. You can tweak queries and weights in the code.</div>
+    <div class="small" style="margin-top:8px;">If rate-limited, switch to your own tiny proxy (Cloudflare Worker snippet in comments).</div>
+    <div class="footer-row">
+      <span>Made by IF Lab</span>
+      <a href="https://uoiflab.org" target="_blank" rel="noopener noreferrer" aria-label="IF Lab website">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="11" fill="#e0e0e0"/>
+          <text x="7" y="15" fill="#5f6368" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="10">IF</text>
+        </svg>
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    // -----------------------------
+    // Config
+    // -----------------------------
+    // Render times in PST; small header note indicates the zone.
+    const TIMEZONE = "America/Los_Angeles";
+
+    // Queries to hit on Google News (RSS). Keep them short and focused.
+    const QUERIES = [
+      '("artificial intelligence" OR AI)',
+      '"machine learning"',
+      'US politics'
+    ];
+
+    // Optional source weights (adjust to taste)
+    const SOURCE_WEIGHTS = {
+  "Reuters": 1.15,
+  "Bloomberg": 1.12,
+  "Financial Times": 1.12,
+  "The New York Times": 1.15,
+  "The Washington Post": 1.14,
+  "Politico": 1.16,
+  "The Atlantic": 1.12,
+  "The Verge": 1.1,
+  "MIT Technology Review": 1.14,
+  "TechCrunch": 1.05,
+  "CoinDesk": 0.9,          // downweighted since less relevant to politics/AI
+  "Cointelegraph": 0.85     // same
+};
+
+// Keyword boosts – refocused on AI, policy, and political developments
+const KEYWORD_BOOST = {
+  // AI-related
+  "artificial intelligence": 1.1,
+  "AI": 1.08,
+  "machine learning": 1.07,
+  "neural network": 1.07,
+  "large language model": 1.1,
+  "LLM": 1.08,
+  "automation": 1.05,
+  "ethics": 1.06,
+  "governance": 1.06,
+  "transparency": 1.05,
+  "bias": 1.05,
+
+  // Politics-related
+  "election": 1.08,
+  "Congress": 1.06,
+  "White House": 1.07,
+  "regulation": 1.08,
+  "policy": 1.07,
+  "bill": 1.06,
+  "law": 1.05,
+  "governor": 1.04,
+  "president": 1.05,
+  "campaign": 1.05,
+
+  // Overlaps between AI & politics
+  "AI regulation": 1.1,
+  "AI policy": 1.1,
+  "AI governance": 1.1,
+  "privacy": 1.06,
+  "security": 1.06,
+  "data protection": 1.06,
+  "tech regulation": 1.07
+};
+
+    // IMPORTANT: We use a public JSON gateway for RSS to avoid CORS issues.
+    // This is convenient for a demo and small personal use. If you want a sturdier setup,
+    // deploy the proxy shown below as a Cloudflare Worker and replace RSS_TO_JSON with your URL.
+    const RSS_TO_JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
+
+    // -----------------------------
+    // Helpers
+    // -----------------------------
+    const fmtDate = (d) =>
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", hour12: true
+      }).format(d);
+
+    const fmtDateOnly = (d) =>
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit"
+      }).format(d);
+
+    const toLocal = (d) => new Date(d.toLocaleString("en-US", { timeZone: TIMEZONE }));
+
+    const recencyScore = (published) => {
+      const now = new Date();
+      const hours = Math.max(0, (now - published) / 36e5);
+      if (hours <= 6) return 1.22;
+      if (hours <= 24) return 1.10;
+      if (hours <= 48) return 0.96;
+      return 0.86;
+    };
+
+    const keywordScore = (text) => {
+      const t = text.toLowerCase();
+      let s = 1.0;
+      for (const [k, mult] of Object.entries(KEYWORD_BOOST)) {
+        if (t.includes(k.toLowerCase())) s *= mult;
+      }
+      return s;
+    };
+
+    const sourceScore = (src) => SOURCE_WEIGHTS[src] || 1.0;
+
+    const dedupe = (items) => {
+      const seen = new Set();
+      const out = [];
+      for (const it of items) {
+        const key = (it.link.split("?")[0] + "||" + it.title.toLowerCase());
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(it);
+      }
+      return out;
+    };
+
+    // Extract site name in a best-effort way from the RSS item
+    const inferSource = (item, feedTitle="") => {
+      if (item.author) return item.author;
+      if (item.guid && typeof item.guid === "string") return "";
+      // Some feeds include the site at the end of the title with " - Source"
+      const m = / - ([^-|·—]+)$/.exec(item.title || "");
+      if (m) return m[1].trim();
+      return feedTitle || "";
+    };
+
+    const googleNewsRssUrl = (query) =>
+      `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+
+
+    async function fetchRss(query) {
+      const url = RSS_TO_JSON + encodeURIComponent(googleNewsRssUrl(query));
+      const res = await fetchWithRetry(url, 2);
+      if (!res.ok) throw new Error(`Feed error ${res.status}`);
+      const data = await res.json();
+      const feedTitle = (data.feed && data.feed.title) || "";
+      const items = (data.items || []).map(i => {
+        const published = new Date(i.pubDate || i.published || Date.now());
+        return {
+          query,
+          title: i.title || "",
+          link: i.link || "",
+          source: inferSource(i, feedTitle),
+          summary: i.description || "",
+          published,
+          img: i.thumbnail || (i.enclosure && (i.enclosure.link || i.enclosure.url)) || null
+        };
+      });
+      return items;
+    }
+
+    // Retry with backoff (300ms then 1s)
+    async function fetchWithRetry(url, retries){
+      let last;
+      for (let i=0;i<=retries;i++){
+        try{ last = await fetch(url); if (last.ok) return last; }catch(e){ last = e; }
+        if (i<retries){ await new Promise(r=>setTimeout(r, i===0?300:1000)); }
+      }
+      if (last instanceof Response) return last; else throw last;
+    }
+
+    function baseScore(item) {
+      let s = 1.0;
+      s *= keywordScore(`${item.title} ${item.summary}`);
+      s *= sourceScore(item.source);
+      s *= recencyScore(item.published);
+      const len = item.title.length;
+      if (len >= 40 && len <= 95) s *= 1.02; // tiny preference for concise titles
+      return s;
+    }
+
+    /** @typedef {{query:string,title:string,link:string,source:string,summary:string,published:Date,score?:number,img?:string,tags?:string[]}} NewsItem */
+    /** @typedef {{items:NewsItem[], leader:NewsItem, score:number, sources:Set<string>, id:string, expanded?:boolean}} StoryGroup */
+
+    // -----------------------------
+    // Main / State
+    // -----------------------------
+    let currentTopN = 15;
+    let currentSinceHours = 24;
+    const TAGS = ["AI","Blockchain","Security","Policy/Regulation","Research"];
+    const PREFS_KEY = 'etn-prefs-v1';
+    const CACHE_KEY = 'etn-cache-v1';
+    let prefs = loadPrefs();
+
+    async function loadNews() {
+      const resultsEl = document.getElementById("results");
+      resultsEl.textContent = "Fetching…";
+
+      const topN = currentTopN;
+      const sinceHours = currentSinceHours;
+
+      try {
+        const all = (await Promise.allSettled(QUERIES.map(fetchRss)))
+          .flatMap(r => r.status === "fulfilled" ? r.value : []);
+
+        // Filter by recency window
+        const cutoff = new Date(Date.now() - sinceHours * 3600 * 1000);
+        let items = all.filter(i => i.published >= cutoff && i.title && i.link);
+
+        // Deduplicate
+        items = dedupe(items);
+
+        // Score
+        items.forEach(i => i.score = baseScore(i));
+
+        // Sort by score then time
+        items.sort((a, b) => b.score - a.score || b.published - a.published);
+
+        // Infer tags
+        items.forEach(i => i.tags = inferTags(i));
+
+        // Apply source and tag filters
+        items = applyFilters(items, prefs);
+
+        // Cluster similar stories
+        const groups = clusterStories(items);
+
+        // Score groups
+        groups.forEach(g => g.score = groupScore(g));
+        // Sort latest first by leader published time
+        groups.sort((a,b)=> b.leader.published - a.leader.published);
+
+        // Flatten groups to render list respecting Top N
+        const top = groups.slice(0, topN);
+
+        // Render
+        if (!top.length) {
+          resultsEl.innerHTML = `<div class="card">No results in the last ${sinceHours} hours. Try widening the window.</div>`;
+          return;
+        }
+
+        resultsEl.innerHTML = top.map(renderGroup).join("");
+
+        // Save cache
+        saveCache({ items, renderedAtISO: new Date().toISOString(), topN, sinceHours, filters: prefs });
+
+      } catch (err) {
+        console.error(err);
+        const cache = loadCache();
+        if (cache && cache.items) {
+          resultsEl.innerHTML = cache.items.slice(0, currentTopN).map(renderFallbackItem).join("");
+        } else {
+          resultsEl.innerHTML = `<div class="card">Error fetching news. Please try again.</div>`;
+        }
+      }
+    }
+
+    function renderFallbackItem(it){
+      const ts = fmtDate(toLocal(new Date(it.published)));
+      const src = it.source || "";
+      const safeTitle = escapeHtml(it.title||"");
+      const safeSnippet = escapeHtml(stripTags(it.summary || "").trim());
+      return `
+        <article class="card news" tabindex="0" role="article" aria-label="${safeTitle}">
+          <div class="content">
+            <h3 class="title"><a href="${it.link}" target="_blank" rel="noopener noreferrer">${safeTitle}</a></h3>
+            <div class="meta">
+              <span>${ts}</span>
+              ${src ? `<span>• ${escapeHtml(src)}</span>` : ""}
+            </div>
+            ${safeSnippet ? `<div class="snippet">${safeSnippet}</div>` : ""}
+          </div>
+        </article>`;
+    }
+
+    // -----------------------------
+    // Utils / Filters / Tags
+    // -----------------------------
+    function inferTags(item){
+      const t = `${item.title} ${stripTags(item.summary||"")}`.toLowerCase();
+      const tags = [];
+      if (/(ai|artificial intelligence|llm|model)/.test(t)) tags.push("AI");
+      if (/(blockchain|crypto|ethereum|bitcoin)/.test(t)) tags.push("Blockchain");
+      if (/(security|vulnerability|breach|hack)/.test(t)) tags.push("Security");
+      if (/(policy|regulation|regulatory|law|bill)/.test(t)) tags.push("Policy/Regulation");
+      if (/(research|paper|study|arxiv|breakthrough)/.test(t)) tags.push("Research");
+      return tags.length? tags: ["Research"]; // default mild bucket
+    }
+
+    function applyFilters(items, prefs){
+      const muted = new Set(prefs.muted||[]);
+      const tagSel = new Set(prefs.tags||[]);
+      const pinned = new Set(prefs.pinned||[]);
+      const out = [];
+      for (const it of items){
+        if (muted.has(it.source)) continue;
+        if (tagSel.size && !it.tags.some(t=> tagSel.has(t))) continue;
+        if (pinned.has(it.source)) it.score = (it.score||1)*1.05;
+        out.push(it);
+      }
+      return out;
+    }
+
+    function loadPrefs(){
+      try { return JSON.parse(localStorage.getItem(PREFS_KEY)||'{}') || {}; } catch { return {}; }
+    }
+    function savePrefs(){ localStorage.setItem(PREFS_KEY, JSON.stringify(prefs||{})); toast('Filters saved'); }
+
+    function saveCache(payload){ localStorage.setItem(CACHE_KEY, JSON.stringify(payload)); }
+    function loadCache(){ try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); } catch{ return null; } }
+
+    // -----------------------------
+    // Clustering
+    // -----------------------------
+    function normTitle(t){ return t.toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim(); }
+    function tokenSet(str){ return new Set(normTitle(str).split(' ').filter(w=> w.length>2)); }
+    function jaccard(aSet,bSet){ const inter=new Set([...aSet].filter(x=>bSet.has(x))); const union=new Set([...aSet,...bSet]); return inter.size/Math.max(1,union.size); }
+    /** @returns {StoryGroup[]} */
+    function clusterStories(items){
+      const groups=[]; const seen=new Set();
+      for(let i=0;i<items.length;i++){
+        if(seen.has(i)) continue;
+        const a=items[i], aSet=tokenSet(a.title); const g=[a]; seen.add(i);
+        for(let j=i+1;j<items.length;j++){
+          if(seen.has(j)) continue;
+          const b=items[j]; const sim=jaccard(aSet, tokenSet(b.title));
+          if(sim>=0.55){ g.push(b); seen.add(j); }
+        }
+        const leader=g[0];
+        groups.push({ items:g, leader, score:0, sources:new Set(g.map(x=>x.source||'')), id: leader.link.split('?')[0] });
+      }
+      return groups;
+    }
+
+    function groupScore(group){
+      const best = Math.max(...group.items.map(i=> i.score||1));
+      const diversityBonus = 1 + Math.min(0.05, group.sources.size*0.01);
+      return best * diversityBonus;
+    }
+
+    // -----------------------------
+    // Render
+    // -----------------------------
+    function renderGroup(group){
+      const it = group.leader;
+      const ts = fmtDate(toLocal(it.published));
+      const src = it.source || "";
+      const safeTitle = escapeHtml(it.title);
+      const safeSnippet = escapeHtml(stripTags(it.summary || "").trim());
+      const more = group.items.length - 1;
+      const groupId = `g-${btoa(group.id).replace(/[^a-z0-9]/gi,'')}`;
+      const tags = (it.tags||[]).map(t=>`<span class="pill" style="pointer-events:none;">${t}</span>`).join(' ');
+      const shareBtn = `<button class="btn share" data-share="${encodeURIComponent(it.link)}" data-title="${encodeURIComponent(it.title)}">Share</button>`;
+      return `
+        <article class="card news" tabindex="0" role="article" aria-label="${safeTitle}">
+          <div class="content">
+            <h3 class="title"><a href="${it.link}" target="_blank" rel="noopener noreferrer">${safeTitle}</a></h3>
+            <div class="meta">
+              <span>${ts}</span>
+              ${src ? `<span>• ${escapeHtml(src)}</span>` : ""}
+            </div>
+            ${safeSnippet ? `<div class="snippet">${safeSnippet}</div>` : ""}
+            <div class="actions">
+              <div>${tags}</div>
+              ${shareBtn}
+            </div>
+            ${more>0 ? `<div class="group-footer"><button class="expand-btn" data-expands="${groupId}" aria-expanded="false" aria-controls="${groupId}">View ${more} more source${more>1?'s':''}</button></div>`: ''}
+            <div id="${groupId}" hidden>
+              ${group.items.slice(1).map(altIt=>{
+                const ats = fmtDate(toLocal(altIt.published));
+                return `<div class="meta" style="margin-top:6px;">• <a href="${altIt.link}" target="_blank" rel="noopener noreferrer">${escapeHtml(altIt.source||'')}</a> — ${ats}</div>`;
+              }).join('')}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[c]));
+    }
+    function stripTags(s) {
+      const div = document.createElement("div");
+      div.innerHTML = s;
+      return div.textContent || div.innerText || "";
+    }
+
+    // Build source lists based on currently rendered cards
+    function populateSourceLists(){
+      const metas = Array.from(document.querySelectorAll('#results .meta'));
+      const sources = new Set();
+      metas.forEach(m=>{
+        const spans = m.querySelectorAll('span');
+        if (spans[1]) {
+          const s = spans[1].textContent.replace(/^•\s*/, '');
+          if (s) sources.add(s);
+        }
+      });
+      const list = Array.from(sources).sort();
+      const build = (elId, key)=>{
+        const el = document.getElementById(elId); if (!el) return;
+        el.innerHTML = list.map(s=>{
+          const checked = (prefs[key]||[]).includes(s) ? 'checked' : '';
+          return `<label><input type="checkbox" data-key="${key}" data-val="${escapeHtml(s)}" ${checked}/> ${escapeHtml(s)}</label>`;
+        }).join('');
+        el.querySelectorAll('input').forEach(inp=>{
+          inp.addEventListener('change',()=>{
+            const key = inp.getAttribute('data-key');
+            const val = inp.getAttribute('data-val');
+            const set = new Set(prefs[key]||[]);
+            if (inp.checked) set.add(val); else set.delete(val);
+            prefs[key] = Array.from(set);
+            savePrefs();
+            loadNews();
+          });
+        });
+      };
+      build('muteList','muted');
+      build('pinList','pinned');
+    }
+
+    function stepTop(delta){
+      const opts=[10,15,20];
+      const idx=Math.max(0,Math.min(opts.length-1,opts.indexOf(currentTopN)+delta));
+      currentTopN=opts[idx];
+      document.querySelectorAll('.btn[data-top]').forEach(b=>b.classList.toggle('active',parseInt(b.getAttribute('data-top'),10)===currentTopN));
+      loadNews();
+    }
+    function setSince(val){
+      const allowed=[3,12,24,48];
+      if(!allowed.includes(val)) return;
+      currentSinceHours=val;
+      document.querySelectorAll('.btn[data-since]').forEach(b=>b.classList.toggle('active',parseInt(b.getAttribute('data-since'),10)===currentSinceHours));
+      loadNews();
+    }
+
+    function toast(msg){
+      const w=document.getElementById('toastWrap'); if(!w) return;
+      const d=document.createElement('div'); d.className='toast'; d.textContent=msg; w.appendChild(d);
+      setTimeout(()=>d.remove(),1600);
+    }
+
+    // Global click handlers for share and expand buttons
+    document.addEventListener('click', (e)=>{
+      const share = e.target.closest('[data-share]');
+      if (share){
+        const url = decodeURIComponent(share.getAttribute('data-share'));
+        const title = decodeURIComponent(share.getAttribute('data-title'));
+        if (navigator.share) navigator.share({ title, url }).catch(()=>{});
+        else { navigator.clipboard?.writeText(`${title} — ${url}`); toast('Copied!'); }
+        return;
+      }
+      const exp = e.target.closest('[data-expands]');
+      if (exp){
+        const id = exp.getAttribute('data-expands');
+        const sec = document.getElementById(id);
+        const isHidden = sec.hasAttribute('hidden');
+        if (isHidden) sec.removeAttribute('hidden'); else sec.setAttribute('hidden','');
+        exp.setAttribute('aria-expanded', String(isHidden));
+      }
+    });
+
+    // Header date and init
+    function init() {
+      const now = new Date();
+      const localNow = toLocal(now);
+      const dateLine = document.getElementById("dateLine");
+      const cached = loadCache();
+      if (cached && cached.renderedAtISO) {
+        const ageH = (Date.now() - new Date(cached.renderedAtISO).getTime())/36e5;
+        const stale = ageH > 3 ? '<span class="stale-dot" title="Results older than 3 hours"></span>' : '';
+        dateLine.innerHTML = `Today is ${fmtDateOnly(localNow)} ${stale}`;
+        // show cached immediately
+        if (cached.items) {
+          const resultsEl = document.getElementById('results');
+          resultsEl.innerHTML = (cached.items||[]).slice(0, cached.topN||currentTopN).map(renderFallbackItem).join('');
+        }
+      } else {
+        dateLine.textContent = `Today is ${fmtDateOnly(localNow)}`;
+      }
+
+      document.getElementById("refreshBtn").addEventListener("click", () => {
+        // Reset filters and active states
+        document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+        prefs.tags = [];
+        prefs.muted = [];
+        prefs.pinned = [];
+        savePrefs();
+        // Reset Top/Since active buttons to defaults 15 and 24
+        currentTopN = 15; currentSinceHours = 24;
+        document.querySelectorAll('.btn[data-top]').forEach(b=>b.classList.toggle('active', b.getAttribute('data-top')==='15'));
+        document.querySelectorAll('.btn[data-since]').forEach(b=>b.classList.toggle('active', b.getAttribute('data-since')==='24'));
+        loadNews();
+      });
+
+      // Top buttons
+      document.querySelectorAll('.btn[data-top]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.btn[data-top]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentTopN = parseInt(btn.getAttribute('data-top'), 10);
+          loadNews();
+        });
+      });
+
+      // Since buttons
+      document.querySelectorAll('.btn[data-since]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.btn[data-since]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentSinceHours = parseInt(btn.getAttribute('data-since'), 10);
+          loadNews();
+        });
+      });
+
+      // Build tag pills
+      const pillRow = document.getElementById('tagPills');
+      TAGS.forEach(t=>{
+        const b = document.createElement('button'); b.className='pill'; b.textContent=t;
+        if ((prefs.tags||[]).includes(t)) b.classList.add('active');
+        b.addEventListener('click',()=>{ b.classList.toggle('active'); prefs.tags = Array.from(pillRow.querySelectorAll('.pill.active')).map(x=>x.textContent); savePrefs(); loadNews(); });
+        pillRow.appendChild(b);
+      });
+
+      // Sources dropdown
+      const sourcesBtn = document.getElementById('sourcesBtn');
+      const sourcesMenu = document.getElementById('sourcesMenu');
+      sourcesBtn.addEventListener('click',()=>{ const open = sourcesMenu.parentElement.classList.toggle('open'); sourcesBtn.setAttribute('aria-expanded', String(open)); });
+      document.addEventListener('click',(e)=>{ if(!sourcesMenu.contains(e.target) && e.target!==sourcesBtn){ sourcesMenu.parentElement.classList.remove('open'); sourcesBtn.setAttribute('aria-expanded','false'); }});
+
+      // Populate source lists lazily after first load
+      loadNews().then(()=>populateSourceLists());
+
+      // Keyboard shortcuts
+      window.addEventListener('keydown',(e)=>{
+        if (e.key==='r'){ e.preventDefault(); loadNews(); }
+        else if (e.key==='['){ stepTop(-1); }
+        else if (e.key===']'){ stepTop(1); }
+        else if (['1','2','3','4'].includes(e.key)){
+          const map = { '1':3, '2':12, '3':24, '4':48 };
+          setSince(map[e.key]);
+        }
+      });
+
+
+      // Register service worker via Blob (optional)
+      try {
+        if ('serviceWorker' in navigator) {
+          const swCode = `self.addEventListener('install',e=>{e.waitUntil(caches.open('etn-sw-v1').then(c=>c.addAll(['./'])))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))})`;
+          const blob = new Blob([swCode], { type:'text/javascript' });
+          navigator.serviceWorker.register(URL.createObjectURL(blob));
+        }
+      } catch {}
+    }
+
+    init();
+
+    // -----------------------------
+    // Optional: Your own proxy (safer for rate limits)
+    // Deploy as a Cloudflare Worker and replace RSS_TO_JSON with your worker URL.
+    //
+    // export default {
+    //   async fetch(request) {
+    //     const { searchParams } = new URL(request.url);
+    //     const rss = searchParams.get("rss");
+    //     if (!rss) return new Response("Missing ?rss=", { status: 400 });
+    //     const r = await fetch(rss, { headers: { "User-Agent": "Mozilla/5.0" }});
+    //     const xml = await r.text();
+    //     return new Response(xml, {
+    //       headers: { "content-type": "application/rss+xml", "access-control-allow-origin": "*" }
+    //     });
+    //   }
+    // }
+    //
+    // Then change fetchRss() to:
+    //   const url = YOUR_WORKER_URL + "?rss=" + encodeURIComponent(googleNewsRssUrl(query));
+    //   const res = await fetch(url);
+    //   // parse XML yourself or run it through a small XML->JSON step on the worker.
+    // -----------------------------
+  </script>
+
+  <script>
+  // ====== MARKET INDICES ======
+  // Using Yahoo Finance API (free, no key required)
+  const INDICES = [
+  { symbol: "^DJI", name: "Dow Jones Industrial Average", shortName: "DOW" },
+  { symbol: "^GSPC", name: "S&P 500", shortName: "S&P 500" }
+];
+const ET = "America/New_York";
+
+// Mock only as a true fallback
+const MOCK_INDEX_DATA = {
+  "^DJI": { price: 37545.23, change: 125.67, changePercent: 0.34 },
+  "^GSPC": { price: 4765.89, change: -12.45, changePercent: -0.26 }
+};
+
+// --- FIXED: single, correct implementation ---
+async function getIndexData(symbol) {
+  const url = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=" +
+              encodeURIComponent(symbol) + "&_t=" + Date.now(); // cache-buster
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Yahoo ${res.status}`);
+    const json = await res.json();
+    const q = json?.quoteResponse?.result?.[0];
+    if (!q) throw new Error("Empty quote result");
+
+    const state = q.marketState; // PRE | REGULAR | POST | CLOSED
+    const usePost = state === "POST" && q.postMarketPrice != null;
+
+    const price = usePost ? q.postMarketPrice
+                          : (q.regularMarketPrice ?? q.previousClose);
+
+    const change = usePost ? (q.postMarketChange ?? 0)
+                           : (q.regularMarketChange ?? (price - (q.previousClose ?? 0)));
+
+    const changePercent = usePost ? (q.postMarketChangePercent ?? 0)
+                                  : (q.regularMarketChangePercent ??
+                                     ((q.previousClose ? (price - q.previousClose) / q.previousClose : 0) * 100));
+
+    const tsSec = usePost ? q.postMarketTime : q.regularMarketTime;
+    const lastUpdateET = tsSec
+      ? new Date(tsSec * 1000).toLocaleString("en-US", { timeZone: ET })
+      : "n/a";
+
+    return { price, change, changePercent, marketState: state, lastUpdateET };
+  } catch (e) {
+    console.warn(`Yahoo Finance failed for ${symbol}:`, e);
+    const m = MOCK_INDEX_DATA[symbol];
+    return m
+      ? { ...m, marketState: "UNKNOWN", lastUpdateET: "fallback" }
+      : { price: 0, change: 0, changePercent: 0, marketState: "UNKNOWN", lastUpdateET: "n/a" };
+  }
+}
+
+function showStocksError(msg){
+  const container = document.getElementById("stocks-leaderboard");
+  if (container) {
+    container.innerHTML = `<div class="stocks-card" style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;background:var(--card-bg);">
+      <div style="font-weight:700;margin-bottom:6px;">Stocks widget</div>
+      <div style="color:var(--text-muted);font-size:0.95rem;">${msg}</div>
+    </div>`;
+  }
+}
+
+async function buildStocksLeaderboard() {
+  const container = document.getElementById("stocks-leaderboard");
+  if (!container) return;
+
+  const dbg = document.getElementById("stocks-debug");
+  dbg && (dbg.textContent = "Loading market indices...");
+
+  const results = [];
+  const errors = [];
+
+  for (const index of INDICES) {
+    try {
+      const data = await getIndexData(index.symbol);
+      results.push({ ...index, ...data });
+    } catch (e) {
+      errors.push(`${index.symbol}: ${e.message||e}`);
+    }
+  }
+
+  if (errors.length) {
+    dbg && (dbg.innerHTML = `<span style="color:var(--warn);">Some indices failed to load:</span> ${errors.slice(0,3).join(", ")}${errors.length>3?"...":""} <span style="color:var(--text-muted);">(Using mock data for failed indices)</span>`);
+  } else {
+    // Don’t promise “real-time” for indices
+    dbg && (dbg.innerHTML = `<span style="color:var(--good);">Loaded ${results.length} market indices</span> <span style="color:var(--text-muted);">(Yahoo Finance; indices may be delayed)</span>`);
+  }
+
+  if (!results.length) {
+    showStocksError('No market data available. Using mock data for demonstration.');
+    return;
+  }
+
+  const now = new Date();
+  const etTime = new Intl.DateTimeFormat("en-US", {
+    timeZone: ET, year:"numeric", month:"short", day:"2-digit",
+    hour:"2-digit", minute:"2-digit", hour12:true
+  }).format(now);
+
+  container.innerHTML = `
+    <style>
+      .stocks-leaderboard { max-width: var(--maxw); margin: 8px auto 16px; padding: 0 var(--pad); font: 14px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+      .stocks-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; background: var(--card-bg); }
+      .stocks-title { font-weight: 700; margin-bottom: 8px; font-size: 1rem; }
+      .stocks-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--divider); }
+      .stocks-row:first-of-type { border-top: none; }
+      .gain { color: var(--good); font-weight: 600; }
+      .loss { color: var(--bad); font-weight: 600; }
+      .muted { color: var(--text-muted); font-size: 12px; }
+      .index-info { display: flex; flex-direction: column; gap: 2px; }
+      .index-change { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+      .index-value { font-size: 18px; font-weight: 700; }
+      .chip { font-size: 11px; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--border); background: var(--muted); }
+    </style>
+    <div class="stocks-card">
+      <div class="stocks-title">Market Indices - ${etTime} ET</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;font-style:italic;">
+        Data from Yahoo Finance. Indices may be delayed; cash indices don’t update after 4:00 PM ET.
+      </div>
+      ${results.map(item => {
+        const cls = item.changePercent >= 0 ? "gain" : "loss";
+        const sign = item.change >= 0 ? "+" : "";
+        return `
+          <div class="stocks-row">
+            <div class="index-info">
+              <div><strong>${item.shortName}</strong> <span class="chip">${item.marketState || "n/a"}</span></div>
+              <div class="muted">${item.name} • Last: ${item.lastUpdateET || "n/a"} ET</div>
+            </div>
+            <div class="index-change">
+              <div class="index-value">${item.price.toFixed(2)}</div>
+              <div class="${cls}">${sign}${item.change.toFixed(2)} (${sign}${item.changePercent.toFixed(2)}%)</div>
+            </div>
+          </div>`;
+      }).join("")}
+    </div>
+  `;
+}
+
+buildStocksLeaderboard();
+setInterval(buildStocksLeaderboard, 60_000);
+</script>
+
+</body>
+</html>
